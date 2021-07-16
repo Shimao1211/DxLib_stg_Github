@@ -340,7 +340,7 @@ BOOL GameLoad(VOID)
 	tama_moto.DivTate = 1;
 
 	//弾のパスをコピー
-	strcpyDx(tama_moto.path, ".\\Image\\dia_blue.png");
+	strcpyDx(tama_moto.path, ".\\Image\\dia_pink.png");
 
 	//画像を分割して読み込み
 	if (LoadImageDivMem(&tama_moto.handle[0], tama_moto.path, tama_moto.DivYoko, tama_moto.DivTate) == FALSE) { return FALSE; }
