@@ -132,8 +132,20 @@ int tamaShotCntMAX = 5;
 //プレイヤー
 CHARACTOR player;
 
+//ロゴ画像
+IMAGE TitleLogo;
+IMAGE TitleEnter;
+IMAGE EndClear;
+
 //背景画像
 IMAGE back[2];	//背景は２つの画像
+IMAGE TitleScene;
+IMAGE EndScene;
+
+//音楽
+AUDIO TitleBGM;
+AUDIO PlayBGM;
+AUDIO EndBGM;
 
 //敵データ(元)
 CHARACTOR teki_moto[TEKI_KIND];
@@ -316,6 +328,16 @@ int WINAPI WinMain(
 	//背景画像解放
 	DeleteGraph(back[0].handle);
 	DeleteGraph(back[1].handle);
+	DeleteGraph(TitleScene.handle);
+	DeleteGraph(EndScene.handle);
+
+	DeleteGraph(TitleLogo.handle);		//画像をメモリ上から削除
+	DeleteGraph(TitleEnter.handle);		//画像をメモリ上から削除
+	DeleteGraph(EndClear.handle);		//画像をメモリ上から削除
+
+	DeleteSoundMem(TitleBGM.handle);	//画像をメモリ上から削除
+	DeleteSoundMem(PlayBGM.handle);		//画像をメモリ上から削除
+	DeleteSoundMem(EndBGM.handle);		//画像をメモリ上から削除
 
 	//敵の画像を解放
 	for (int i = 0; i < TEKI_KIND; i++)
@@ -388,6 +410,26 @@ BOOL GameLoad(VOID)
 	back[1].x = 0;
 	back[1].y = 0;
 	back[1].IsDraw = TRUE;	//描画する
+
+	if (LoadImageMem(&TitleScene, ".\\Image\\TitleScene.png") == FALSE) { return FALSE; }
+	TitleScene.x = 0;
+	TitleScene.y = 0;
+	TitleScene.IsDraw = TRUE;	//描画する
+
+	if (LoadImageMem(&EndScene, ".\\Image\\EndScene.png") == FALSE) { return FALSE; }
+	EndScene.x = 0;
+	EndScene.y = 0;
+	EndScene.IsDraw = TRUE;	//描画する
+
+	//ロゴを読み込む
+	if (!LoadImageMem(&TitleLogo, ".\\Image\\タイトルロゴ.\png")) { return FALSE; }
+	if (!LoadImageMem(&TitleEnter, ".\\Image\\PushEnter.\png")) { return FALSE; }
+	if (!LoadImageMem(&EndClear, ".\\Image\\Clear.\png")) { return FALSE; }
+
+	//音楽を読み込む
+	if (!LoadAudio(&TitleBGM, ".\\Audio\\TitleBGM.mp3", 255, DX_PLAYTYPE_LOOP)) { return FALSE; }
+	if (!LoadAudio(&PlayBGM, ".\\Audio\\PlayBGM.mp3", 255, DX_PLAYTYPE_LOOP)) { return FALSE; }
+	if (!LoadAudio(&EndBGM, ".\\Audio\\EndBGM.mp3", 255, DX_PLAYTYPE_LOOP)) { return FALSE; }
 
 	//敵の画像を読み込み
 	for (int i = 0; i < TEKI_KIND; i++)
@@ -555,6 +597,32 @@ VOID GameInit(VOID)
 	back[1].y = 0;
 	back[1].IsDraw = TRUE;	//描画する
 
+	TitleScene.x = 0;
+	TitleScene.y = 0;
+	TitleScene.IsDraw = TRUE;	//描画する
+
+	EndScene.x = 0;
+	EndScene.y = 0;
+	EndScene.IsDraw = TRUE;	//描画する
+
+	//タイトルロゴの位置を決める
+	TitleLogo.x = GAME_WIDTH / 2 - TitleLogo.width / 2;	//中央揃え
+	TitleLogo.y = GAME_HEIGHT / 4 - TitleLogo.height / 2;	//中央揃え
+	TitleEnter.y = 100;
+
+	//PushEnterの位置を決める
+	TitleEnter.x = GAME_WIDTH / 2 - TitleEnter.width / 2;	//中央揃え
+	TitleEnter.y = GAME_HEIGHT - TitleEnter.height - 100;
+
+	////PushEnterの点滅
+	//PushEnterCnt = 0;
+	//PushEnterCntMAX = 60;
+	//PushEnterBrink = FALSE;
+
+	//クリアロゴの位置を決める
+	EndClear.x = GAME_WIDTH / 2 - EndClear.width / 2;	//中央揃え
+	EndClear.y = GAME_HEIGHT / 2 - EndClear.height / 2;	//中央揃え
+
 	//敵の画像を読み込み
 	for (int i = 0; i < TEKI_KIND; i++)
 	{
@@ -598,6 +666,9 @@ VOID TitleProc(VOID)
 
 	if (KeyClick(KEY_INPUT_RETURN) == TRUE)
 	{
+		//BGMを止める
+		StopSoundMem(TitleBGM.handle);
+
 		//シーン切り替え
 		//次のシーンの初期化をここで行うと楽
 
@@ -613,6 +684,13 @@ VOID TitleProc(VOID)
 		return;
 	}
 
+	//BGMが流れていないとき
+	if (CheckSoundMem(TitleBGM.handle) == 0)
+	{
+		//BGMを流す
+		PlaySoundMem(TitleBGM.handle, TitleBGM.playType);
+	}
+
 	return;
 }
 
@@ -621,7 +699,12 @@ VOID TitleProc(VOID)
 /// </summary>
 VOID TitleDraw(VOID)
 {
+	DrawGraph(TitleScene.x, TitleScene.y, TitleScene.handle, TRUE);
 
+	//タイトルロゴの描画
+	DrawGraph(TitleLogo.x, TitleLogo.y, TitleLogo.handle, TRUE);
+
+	DrawGraph(TitleEnter.x, TitleEnter.y, TitleEnter.handle, TRUE);
 
 
 	DrawString(0, 0, "タイトル画面", GetColor(0, 0, 0));
@@ -678,8 +761,18 @@ VOID Play(VOID)
 /// </summary>
 VOID PlayProc(VOID)
 {
+	//BGMが流れていないとき
+	if (CheckSoundMem(PlayBGM.handle) == 0)
+	{
+		//BGMを流す
+		PlaySoundMem(PlayBGM.handle, PlayBGM.playType);
+	}
+
 	if (KeyClick(KEY_INPUT_RETURN) == TRUE)
 	{
+		//BGMを止める
+		StopSoundMem(PlayBGM.handle);
+
 		//プレイ画面に切り替え
 		ChangeScene(GAME_SCENE_END);
 
@@ -1038,10 +1131,20 @@ VOID EndProc(VOID)
 {
 	if (KeyClick(KEY_INPUT_RETURN) == TRUE)
 	{
+		//BGMを止める
+		StopSoundMem(EndBGM.handle);
+
 		//タイトル画面に切り替え
 		ChangeScene(GAME_SCENE_TITLE);
 
 		return;
+	}
+
+	//BGMが流れていないとき
+	if (CheckSoundMem(EndBGM.handle) == 0)
+	{
+		//BGMを流す
+		PlaySoundMem(EndBGM.handle, EndBGM.playType);
 	}
 
 	return;
@@ -1052,6 +1155,11 @@ VOID EndProc(VOID)
 /// </summary>
 VOID EndDraw(VOID)
 {
+	DrawGraph(EndScene.x, EndScene.y, EndScene.handle, TRUE);
+
+	//EndClearの描画
+	DrawGraph(EndClear.x, EndClear.y, EndClear.handle, TRUE);
+
 	DrawString(0, 0, "エンド画面", GetColor(0, 0, 0));
 	return;
 }
